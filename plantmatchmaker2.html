@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Plant Mood Matcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f7f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2f5d3a;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 18px rgba(0,0,0,0.08);
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: 1px solid #c7d2c4;
+            background: #f9fbf8;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 22px;
+            background: #2f5d3a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 0.03em;
+        }
+
+        button:hover {
+            background: #3c7a4d;
+        }
+
+        .result {
+            margin-top: 28px;
+            padding: 20px;
+            border: 2px solid #2f5d3a;
+            border-radius: 12px;
+            display: none;
+            background: #ffffff;
+        }
+
+        .result img {
+            width: 100%;
+            max-height: 260px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .plant-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 14px;
+            color: #2f5d3a;
+        }
+
+        .plant-tags {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #5f7b63;
+            font-style: italic;
+        }
+
+        .plant-description {
+            margin-top: 10px;
+            line-height: 1.5;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Plant Mood Matcher</h1>
+
+<div class="container">
+    <label for="mood">Kies je stemming:</label>
+    <select id="mood">
+        <option value="relaxed">Relaxed</option>
+        <option value="energiek">Energiek</option>
+        <option value="cozy">Cozy</option>
+        <option value="productief">Productief</option>
+        <option value="vrolijk">Vrolijk</option>
+    </select>
+
+    <label for="light">Hoeveel licht is er in huis?</label>
+    <select id="light">
+        <option value="veel">Veel licht</option>
+        <option value="weinig">Weinig licht</option>
+    </select>
+
+    <label for="care">Hoeveel onderhoud wil je?</label>
+    <select id="care">
+        <option value="weinig">Weinig onderhoud</option>
+        <option value="gemiddeld">Gemiddeld</option>
+        <option value="veel">Veel zorg</option>
+    </select>
+
+    <button onclick="findPlant()">Vind mijn plant</button>
+
+    <div class="result" id="result">
+        <img id="plantImage" src="" alt="Plant">
+        <div class="plant-name" id="plantName"></div>
+        <div class="plant-tags" id="plantTags"></div>
+        <p class="plant-description" id="plantDescription"></p>
+    </div>
+</div>
+
+<script>
+    // Alle afbeeldingen zijn generieke, betrouwbare plantfoto’s
+    const plants = {
+        // RELAXED
+        "relaxed_veel_weinig": {
+            name: "Lavendel",
+            tags: "Relaxed • Veel licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80",
+            desc: "Lavendel brengt meteen een zachte, rustgevende sfeer in huis. De paarse bloemetjes en subtiele geur doen denken aan een zonnige vakantie in de Provence. Zet haar op een lichte plek, geef af en toe water en geniet van een hoekje waar je vanzelf langzamer gaat ademen en je hoofd tot rust komt."
+        },
+        "relaxed_veel_gemiddeld": {
+            name: "Aloë Vera",
+            tags: "Relaxed • Veel licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1518977956815-dee0061a7b2a?auto=format&fit=crop&w=900&q=80",
+            desc: "Aloë Vera straalt kalmte uit met haar dikke, groene bladeren. Ze past perfect bij een rustige, minimalistische ruimte waar je graag tot jezelf komt. Terwijl jij ontspant met een boek of een kop thee, zuivert zij de lucht en geeft ze je interieur een serene, natuurlijke uitstraling."
+        },
+        "relaxed_veel_veel": {
+            name: "Bonsai",
+            tags: "Relaxed • Veel licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80",
+            desc: "Een bonsai is als een klein levend kunstwerk in huis. Het verzorgen ervan vraagt aandacht en geduld, maar juist dat ritueel kan enorm ontspannend zijn. Terwijl je de takjes bijwerkt en de vorm bewaakt, creëer je een zen-moment voor jezelf en een rustpunt in je interieur."
+        },
+
+        "relaxed_weinig_weinig": {
+            name: "Sansevieria",
+            tags: "Relaxed • Weinig licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1614594975525-31c8c95c6a53?auto=format&fit=crop&w=900&q=80",
+            desc: "De sansevieria is de ultieme relax-plant: sterk, rustig aanwezig en totaal niet veeleisend. Ze voelt zich prima in een hoekje met weinig licht en kan tegen een stootje. Ideaal als je een kalme sfeer wilt zonder je druk te maken over ingewikkelde verzorging."
+        },
+        "relaxed_weinig_gemiddeld": {
+            name: "Pannenkoekenplant",
+            tags: "Relaxed • Weinig licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1589739900243-4b52c9b5c2e7?auto=format&fit=crop&w=900&q=80",
+            desc: "De pannenkoekenplant heeft ronde, zachte blaadjes die meteen een vriendelijke, ontspannen sfeer oproepen. Hij doet het goed in wat zachter licht en groeit gestaag mee met jouw rustige ritme. Een perfecte plant voor een cozy leeshoek of een relaxed bureau."
+        },
+        "relaxed_weinig_veel": {
+            name: "Varen",
+            tags: "Relaxed • Weinig licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1524592714635-79fda5e53232?auto=format&fit=crop&w=900&q=80",
+            desc: "Varens houden van een wat donkerder, vochtig hoekje en vragen regelmatige aandacht. In ruil daarvoor krijg je een weelderig groen tapijt van bladeren dat je kamer verandert in een rustige, bosachtige oase. Perfect als je ontspant bij het idee van een kleine indoor jungle."
+        },
+
+        // ENERGIEK
+        "energiek_veel_weinig": {
+            name: "Cactus",
+            tags: "Energiek • Veel licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80",
+            desc: "De cactus is compact, stoer en vol karakter. Met zijn speelse vormen en prikkelende uitstraling geeft hij je ruimte een energieke boost. Hij voelt zich heerlijk in de zon en vraagt bijna niets terug, zodat jij je energie in andere dingen kunt steken."
+        },
+        "energiek_veel_gemiddeld": {
+            name: "Citroenplant",
+            tags: "Energiek • Veel licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80",
+            desc: "Een citroenplant brengt een frisse, zonnige vibe in huis. De glanzende bladeren en eventuele vruchtjes geven je het gevoel dat je in een mediterrane tuin zit. Ideaal als je graag wakker wordt in een ruimte die bruist van licht en levendigheid."
+        },
+        "energiek_veel_veel": {
+            name: "Bird of Paradise",
+            tags: "Energiek • Veel licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1524592714635-79fda5e53232?auto=format&fit=crop&w=900&q=80",
+            desc: "De Bird of Paradise is een echte showstopper met grote, tropische bladeren. Met wat extra zorg en liefde groeit hij uit tot een krachtige, energieke blikvanger. Perfect als je huis mag voelen als een zonnige, exotische getaway vol dynamiek."
+        },
+
+        "energiek_weinig_weinig": {
+            name: "ZZ-plant",
+            tags: "Energiek • Weinig licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1589739900243-4b52c9b5c2e7?auto=format&fit=crop&w=900&q=80",
+            desc: "De ZZ-plant heeft glanzende, stevige bladeren die zelfs in een donkerder hoekje levendig blijven. Hij oogt fris en krachtig, maar is verrassend makkelijk in onderhoud. Ideaal als je een energieke uitstraling wilt zonder veel gedoe."
+        },
+        "energiek_weinig_gemiddeld": {
+            name: "Drakenbloedboom",
+            tags: "Energiek • Weinig licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80",
+            desc: "De drakenbloedboom heeft een stoere, bijna futuristische look. Zijn lange, smalle bladeren geven je interieur een krachtige, energieke twist, zelfs op plekken met minder licht. Met wat regelmatige zorg blijft hij jarenlang een opvallende huisgenoot."
+        },
+        "energiek_weinig_veel": {
+            name: "Calathea",
+            tags: "Energiek • Weinig licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80",
+            desc: "Calathea’s staan bekend om hun prachtige, getekende bladeren die soms zelfs bewegen met het daglicht. Ze vragen wat aandacht, maar brengen in ruil een levendig, bijna dansend groen accent in je kamer. Perfect als je energie krijgt van planten met persoonlijkheid."
+        },
+
+        // COZY
+        "cozy_veel_weinig": {
+            name: "Vetplantjes Mix",
+            tags: "Cozy • Veel licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80",
+            desc: "Een groepje vetplantjes op de vensterbank zorgt meteen voor een knusse, huiselijke sfeer. De verschillende vormen en tinten groen maken het geheel speels, terwijl jij nauwelijks naar de verzorging hoeft om te kijken. Ideaal voor een cozy hoekje in de zon."
+        },
+        "cozy_veel_gemiddeld": {
+            name: "Klimop",
+            tags: "Cozy • Veel licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1524592714635-79fda5e53232?auto=format&fit=crop&w=900&q=80",
+            desc: "Klimop slingert zich sierlijk langs plankjes, rekjes of een kast en geeft je interieur een romantische, knusse uitstraling. Met wat licht en regelmatige verzorging creëer je een groene, omhullende sfeer waarin je je graag terugtrekt."
+        },
+        "cozy_veel_veel": {
+            name: "Hortensia",
+            tags: "Cozy • Veel licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80",
+            desc: "Met haar volle bollen van bloemen brengt de hortensia een warme, bijna nostalgische gezelligheid in huis. Ze vraagt wat extra aandacht, maar elke bloei voelt als een kleine viering. Perfect voor wie houdt van een romantische, zachte sfeer."
+        },
+
+        "cozy_weinig_weinig": {
+            name: "Philodendron",
+            tags: "Cozy • Weinig licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1589739900243-4b52c9b5c2e7?auto=format&fit=crop&w=900&q=80",
+            desc: "De philodendron groeit rustig door met zijn hartvormige bladeren en voelt zich ook in minder licht prima thuis. Hij geeft je kamer een warme, groene omhelzing zonder veel eisen te stellen. Ideaal voor een knusse zithoek of slaapkamer."
+        },
+        "cozy_weinig_gemiddeld": {
+            name: "Monstera",
+            tags: "Cozy • Weinig licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80",
+            desc: "De monstera, met haar iconische gatenbladeren, brengt een zachte urban jungle vibe in huis. Ze voelt zich goed in gefilterd licht en groeit mee met jouw cozy leefruimte. Een perfecte plant om een saaie hoek om te toveren tot een uitnodigende plek."
+        },
+        "cozy_weinig_veel": {
+            name: "Orchidee",
+            tags: "Cozy • Weinig licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80",
+            desc: "Orchideeën hebben iets intiems en verfijnds. Hun elegante bloemen geven zelfs een eenvoudige kamer een warme, luxe uitstraling. Met wat extra aandacht en liefde belonen ze je met lange bloeiperiodes vol zachte, cozy schoonheid."
+        },
+
+        // PRODUCTIEF
+        "productief_veel_weinig": {
+            name: "Rubberplant",
+            tags: "Productief • Veel licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1614594975525-31c8c95c6a53?auto=format&fit=crop&w=900&q=80",
+            desc: "De rubberplant heeft een rustige, strakke uitstraling die perfect past bij een opgeruimde werkplek. Hij zuivert de lucht en vraagt weinig aandacht, zodat jij je volledig kunt focussen. Ideaal voor een productieve, maar toch groene omgeving."
+        },
+        "productief_veel_gemiddeld": {
+            name: "Areca Palm",
+            tags: "Productief • Veel licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1524592714635-79fda5e53232?auto=format&fit=crop&w=900&q=80",
+            desc: "De Areca palm brengt een frisse, lichte energie in je werk- of studeerkamer. De sierlijke bladeren bewegen zacht mee met de lucht en geven je het gevoel dat je in een lichte, inspirerende ruimte werkt. Perfect als je productief wilt zijn zonder dat het steriel aanvoelt."
+        },
+        "productief_veel_veel": {
+            name: "Ficus Lyrata",
+            tags: "Productief • Veel licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80",
+            desc: "De Ficus Lyrata, met zijn grote vioolvormige bladeren, is een statement piece. Hij vraagt wat meer zorg, maar geeft je werkruimte een krachtige, professionele uitstraling. Ideaal als je graag werkt in een omgeving die ambitie en groei uitstraalt."
+        },
+
+        "productief_weinig_weinig": {
+            name: "Zamioculcas",
+            tags: "Productief • Weinig licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1589739900243-4b52c9b5c2e7?auto=format&fit=crop&w=900&q=80",
+            desc: "De Zamioculcas blijft fris en groen, zelfs in een hoekje met weinig licht. Hij is bijna onverwoestbaar en houdt je bureau of werkplek rustig en opgeruimd. Een ideale partner als je gefocust wilt werken zonder je druk te maken over verzorging."
+        },
+        "productief_weinig_gemiddeld": {
+            name: "Peperomia",
+            tags: "Productief • Weinig licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80",
+            desc: "Peperomia is compact, stijlvol en perfect voor op je bureau. De dikke blaadjes geven een subtiel groen accent dat je werkplek levendiger maakt, zonder te overheersen. Ideaal als je graag geconcentreerd werkt in een rustige, maar inspirerende omgeving."
+        },
+        "productief_weinig_veel": {
+            name: "Bromelia",
+            tags: "Productief • Weinig licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80",
+            desc: "De bromelia brengt met haar felle kleuren een creatieve vonk in je werkruimte. Ze vraagt wat meer aandacht, maar elke blik op haar vrolijke rozet kan net dat extra beetje motivatie geven. Perfect als je productiviteit graag combineert met speelse energie."
+        },
+
+        // VROLIJK
+        "vrolijk_veel_weinig": {
+            name: "Mini-zonnebloem",
+            tags: "Vrolijk • Veel licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80",
+            desc: "Een mini-zonnebloem is pure zonneschijn in potvorm. De gele bloemen toveren vanzelf een glimlach op je gezicht en brengen een zomerse sfeer in huis. Met voldoende licht en wat basiszorg blijft ze een vrolijk accent in je interieur."
+        },
+        "vrolijk_veel_gemiddeld": {
+            name: "Geranium",
+            tags: "Vrolijk • Veel licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80",
+            desc: "Geraniums staan bekend om hun uitbundige kleuren en gezellige uitstraling. Ze doen het geweldig op een zonnige vensterbank of balkon en geven je elke dag een vrolijk welkom. Ideaal als je huis mag voelen als een kleine, bloeiende feestlocatie."
+        },
+        "vrolijk_veel_veel": {
+            name: "Hibiscus",
+            tags: "Vrolijk • Veel licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1524592714635-79fda5e53232?auto=format&fit=crop&w=900&q=80",
+            desc: "De hibiscus brengt tropische, kleurrijke bloemen die je kamer laten stralen. Ze vraagt wat extra aandacht, maar elke bloem voelt als een mini-vakantie in eigen huis. Perfect als je energie krijgt van kleur, zon en een tikje exotische vrolijkheid."
+        },
+
+        "vrolijk_weinig_weinig": {
+            name: "Lucky Bamboo",
+            tags: "Vrolijk • Weinig licht • Weinig onderhoud",
+            img: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=80",
+            desc: "Lucky Bamboo is een speelse, minimalistische plant die zelfs in weinig licht goed blijft. De sierlijke stengels geven een vrolijke, lichte touch aan je interieur. Ideaal als je een subtiele, maar optimistische sfeer wilt neerzetten."
+        },
+        "vrolijk_weinig_gemiddeld": {
+            name: "Anthurium",
+            tags: "Vrolijk • Weinig licht • Gemiddeld onderhoud",
+            img: "https://images.unsplash.com/photo-1589739900243-4b52c9b5c2e7?auto=format&fit=crop&w=900&q=80",
+            desc: "De anthurium heeft glanzende bladeren en opvallende, kleurrijke bloemen die lang blijven staan. Zelfs in wat zachter licht zorgt hij voor een vrolijke, bijna feestelijke uitstraling. Perfect als je elke dag een klein kleuraccent wilt zien."
+        },
+        "vrolijk_weinig_veel": {
+            name: "Begonia Rex",
+            tags: "Vrolijk • Weinig licht • Veel zorg",
+            img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=900&q=80",
+            desc: "Begonia Rex is een echte blikvanger met haar bonte, bijna geschilderde bladeren. Ze vraagt wat meer aandacht, maar brengt in ruil een explosie van kleur en speelsheid in je ruimte. Ideaal als je vrolijk wordt van unieke, expressieve planten."
+        }
+    };
+
+    function findPlant() {
+        const mood = document.getElementById("mood").value;
+        const light = document.getElementById("light").value;
+        const care = document.getElementById("care").value;
+
+        const key = `${mood}_${light}_${care}`;
+        const plant = plants[key];
+
+        if (plant) {
+            document.getElementById("plantImage").src = plant.img;
+            document.getElementById("plantImage").alt = plant.name;
+            document.getElementById("plantName").textContent = plant.name;
+            document.getElementById("plantTags").textContent = plant.tags;
+            document.getElementById("plantDescription").textContent = plant.desc;
+            document.getElementById("result").style.display = "block";
+        }
+    }
+</script>
+
+</body>
+</html>
